@@ -1,0 +1,5 @@
+  app.use("/api/contact", contact);
+  app.use("/api/user", user);
+  app.use("/api/question", question);
+  app.use("/api/unique", unique);
+  app.use("/api/bonus", bonus);
