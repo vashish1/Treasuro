@@ -12,7 +12,7 @@ import (
 var cl1, cl2 *mongo.Collection
 
 func init(){
- cl1,cl2:=database.Createdb()
+ cl1,cl2=database.Createdb()
  ok:=database.InsertUUIDindb(cl2)
  if ok{
 	 fmt.Print("uuid's generated")

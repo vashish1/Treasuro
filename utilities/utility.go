@@ -1,6 +1,8 @@
 package utilities
 
-import "github.com/dgrijalva/jwt-go"
+import (
+	"github.com/dgrijalva/jwt-go"
+)
 
 func GenerateToken(name,id string)string{
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -9,7 +11,7 @@ func GenerateToken(name,id string)string{
 	})
 
 	tokenString, err := token.SignedString([]byte("idgafaboutthingsanymore"))
-	if err!=nil {
+	if err==nil {
 		return tokenString
 	}
 	return ""

@@ -32,7 +32,7 @@ func Createdb() (*mongo.Collection,*mongo.Collection) {
 
 	fmt.Println("Connected to MongoDB!")
 	usercollection := client.Database("Treasuro").Collection("User")
-    uuid :=client.Database("Treasuro").Collection("Uid's")
+    uuid :=client.Database("Treasuro").Collection("Uid")
 	return usercollection, uuid
 }
 
