@@ -1,18 +1,20 @@
 package database
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"context"
 	"log"
-	"github.com/google/uuid"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 //User ......
 type User struct {
+	UUID         string
 	Name         string
 	Email        string
 	PasswordHash string
@@ -35,18 +37,72 @@ func SHA256ofstring(p string) string {
 	return hash
 }
 
-//GenerateUUID generates a unique id for every user.
-func GenerateUUID() string {
+//Insertintouserdb inserts the data into the database
+func Insertintouserdb(usercollection *mongo.Collection, u User) bool {
 
-	sd := uuid.New()
-	return (sd.String())
+	fmt.Println(u.Name)
+	insertResult, err := usercollection.InsertOne(context.TODO(), u)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
 
+	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+	return true
+}
+
+//Findfromuserdb finds the required data
+func Findfromuserdb(usercollection *mongo.Collection, st string, p string) bool {
+	filter := bson.D{primitive.E{Key: "uuid", Value: st}}
+	var result User
+
+	err := usercollection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	if result.PasswordHash != SHA256ofstring(p) {
+		return false
+	}
+	return true
+}
+
+//Finddb finds the required database
+func Finddb(c *mongo.Collection, s string) User {
+	filter := bson.D{primitive.E{Key: "email", Value: s}}
+	var result User
+
+	err := c.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		return result
+	}
+	return result
+}
+func UpdateUserCreds(c *mongo.Collection,id,email,pass string)bool{
+	filter := bson.D{
+		{"uuid", id},
+	}
+	passhash:=SHA256ofstring(pass)
+	update := bson.D{
+		{
+			"$set", bson.D{
+				{"email", email},
+			{"passwordhash",passhash}},
+		},
+	}
+	updateResult, err := c.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+	return true
 }
 
 //UpdateToken updates the user info
 func UpdateToken(c *mongo.Collection, o string, t string) bool {
 	filter := bson.D{
-		{"email", o},
+		{"uuid", o},
 	}
 	update := bson.D{
 		{
