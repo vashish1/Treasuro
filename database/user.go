@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,13 +17,17 @@ import (
 type User struct {
 	UUID         string
 	Name         string
+	Username     string
+	PhnNo        string
+	SQR          int
+	TimeStamp    time.Time
 	Email        string
 	PasswordHash string
 	Token        string
 }
 
 //Newuser .....
-func Newuser(name string, email string, password string, img string) User {
+func Newuser(name, email, password, phn, sqr string, t time.Time) User {
 
 	Password := SHA256ofstring(password)
 	U := User{Name: name, Email: email, PasswordHash: Password}
@@ -52,8 +57,21 @@ func Insertintouserdb(usercollection *mongo.Collection, u User) bool {
 }
 
 //Findfromuserdb finds the required data
-func Findfromuserdb(usercollection *mongo.Collection, st string, p string) bool {
+func Findfromuserdb(usercollection *mongo.Collection, st string) bool {
 	filter := bson.D{primitive.E{Key: "uuid", Value: st}}
+	var result User
+
+	err := usercollection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	return true
+}
+
+//FindUser finds if the user exists but with respect to the username.
+func FindUser(usercollection *mongo.Collection, st string, p string) bool {
+	filter := bson.D{primitive.E{Key: "username", Value: st}}
 	var result User
 
 	err := usercollection.FindOne(context.TODO(), filter).Decode(&result)
@@ -69,7 +87,7 @@ func Findfromuserdb(usercollection *mongo.Collection, st string, p string) bool 
 
 //Finddb finds the required database
 func Finddb(c *mongo.Collection, s string) User {
-	filter := bson.D{primitive.E{Key: "email", Value: s}}
+	filter := bson.D{primitive.E{Key: "username", Value: s}}
 	var result User
 
 	err := c.FindOne(context.TODO(), filter).Decode(&result)
@@ -78,16 +96,19 @@ func Finddb(c *mongo.Collection, s string) User {
 	}
 	return result
 }
-func UpdateUserCreds(c *mongo.Collection,id,email,pass string)bool{
+func UpdateUserCreds(c *mongo.Collection, id, username, phn, email, pass string) bool {
 	filter := bson.D{
 		{"uuid", id},
 	}
-	passhash:=SHA256ofstring(pass)
+	passhash := SHA256ofstring(pass)
 	update := bson.D{
 		{
 			"$set", bson.D{
 				{"email", email},
-			{"passwordhash",passhash}},
+				{"passwordhash", passhash},
+				{"username", username},
+				{"phnno", phn},
+				{"sqr", 5}},
 		},
 	}
 	updateResult, err := c.UpdateOne(context.TODO(), filter, update)

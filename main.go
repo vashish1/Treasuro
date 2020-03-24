@@ -23,7 +23,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/register", register).Methods("POST")
 	r.HandleFunc("/signup",signup).Methods("POST","GET")
-	// r.HandleFunc("/login", login).Methods("POST")
+	r.HandleFunc("/login", login).Methods("POST")
 	// r.HandleFunc("/dashboard", dashboard).Methods("GET", "POST")
 	http.Handle("/", r)
 	http.ListenAndServe(":80", nil)

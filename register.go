@@ -17,9 +17,11 @@ type regis struct {
 }
 
 type mockSignup struct {
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Cpassword string `json:"cpassword"`
+	Username string
+	PhNumber string
+	Email     string 
+	Password  string 
+	Cpassword string 
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +84,7 @@ func signup(w http.ResponseWriter, r *http.Request){
 	}
 	if(test.Password==test.Cpassword){
 
-		p:=database.UpdateUserCreds(cl1,id,test.Email,test.Password)
+		p:=database.UpdateUserCreds(cl1,id,test.Username,test.PhNumber,test.Email,test.Password)
 		if p{
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"successfull": "updated credentials"}`))
