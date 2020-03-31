@@ -3,10 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Question struct {
@@ -26,7 +29,7 @@ func FindQuestion(c *mongo.Collection, id int) Question {
 	return result
 }
 
-func InsertQuestion(c *mongo.Collection, u Question)bool {
+func InsertQuestion(c *mongo.Collection, u Question) bool {
 	insertResult, err := c.InsertOne(context.TODO(), u)
 	if err != nil {
 		fmt.Print(err)
@@ -36,17 +39,18 @@ func InsertQuestion(c *mongo.Collection, u Question)bool {
 	return true
 }
 
-func UpdateScore(c *mongo.Collection, st string,sc int)bool {
+func UpdateScore(c *mongo.Collection, st string, sc int) bool {
 	filter := bson.D{
 		{"uuid", st},
 	}
+	t := time.Now()
 	update := bson.D{
 		{
 			"$inc", bson.D{{"score", sc},
-		                   {"level",1}},
+				{"level", 1}},
 		},
 		{
-			"$set",bson.D{{"attempts",1}},
+			"$set", bson.D{{"attempts", 1}, {"timestamp", t}},
 		},
 	}
 	updateResult, err := c.UpdateOne(context.TODO(), filter, update)
@@ -58,14 +62,14 @@ func UpdateScore(c *mongo.Collection, st string,sc int)bool {
 	return true
 }
 
-func UpdateAttempts(c *mongo.Collection,st string)bool{
+func UpdateAttempts(c *mongo.Collection, st string) bool {
 	filter := bson.D{
 		{"uuid", st},
 	}
 	update := bson.D{
 		{
 			"$inc", bson.D{{"attempts", 1},
-		                   {"score",-2}},
+				{"score", -2}},
 		},
 	}
 	updateResult, err := c.UpdateOne(context.TODO(), filter, update)
@@ -75,4 +79,39 @@ func UpdateAttempts(c *mongo.Collection,st string)bool{
 	}
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	return true
+}
+
+func Leaderboard(c *mongo.Collection)[]User {
+	filter := bson.D{}
+
+	projection := bson.D{
+		{"_id", 0},
+		{"username", 1},
+		{"score", bson.D{
+			{"$sort", -1}}},
+		{"timestamp", bson.D{{
+			"$sort", 1}}},
+	}
+	var result []User
+	cur, err := c.Find(context.Background(), filter, options.Find().SetProjection(projection))
+
+	if err != nil {
+		fmt.Println("the error is:", err)
+	}
+	for cur.Next(context.TODO()) {
+		var elem User
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal("decoding error:", err)
+
+		}
+		result = append(result, elem)
+	}
+	if err := cur.Err(); err != nil {
+		fmt.Println("cursor error", err)
+	}
+
+	cur.Close(context.TODO())
+	fmt.Println(result)
+	return result
 }

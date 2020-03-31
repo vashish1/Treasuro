@@ -21,8 +21,8 @@ func main() {
 	r.HandleFunc("/signup",signup).Methods("POST","GET")
 	r.HandleFunc("/login", login).Methods("POST")
 	r.HandleFunc("/dashboard", dashboard).Methods("GET")
-	r.HandleFunc("/submit",submit)
-
+	r.HandleFunc("/submit",submit).Methods("POST")
+    r.HandleFunc("/leaderboard",leaderboard).Methods("GET")
 	http.Handle("/", r)
 	http.ListenAndServe(":80", nil)
 }
