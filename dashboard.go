@@ -2,6 +2,7 @@ package main
 
 import (
 	"Treasuro/database"
+	"Treasuro/utilities"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -39,10 +40,10 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 		id = claims["id"].(string)
 	}
 	user := database.Finddb(cl1, id)
-	if user.Attempts==5{
+	if user.Attempts == 5 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "Sorry, you have been disqualified"}`))
-	}else{
+	} else {
 		ques := database.FindQuestion(cl3, user.Level)
 		data := Data{
 			User:     user.Username,
@@ -81,16 +82,20 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(body, &Answer)
 	if err != nil {
 		ques := database.FindQuestion(cl3, user.Level)
+		random := database.FindQuestion(cl3, 0)
 		if ques.Answer == Answer {
 			database.UpdateScore(cl1, id, 10)
+		} else if random.Answer == Answer {
+			rndmsc := utilities.RandomScore()
+			database.UpdateScore(cl1, id, rndmsc)
 		} else {
 			database.UpdateAttempts(cl1, id)
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"successfull": "updated score"}`))
-	}else{
+	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "password do not match"}`))
 	}
-    
+
 }

@@ -112,7 +112,8 @@ func UpdateUserCreds(c *mongo.Collection, id, username, phn, email, pass string)
 				{"passwordhash", passhash},
 				{"username", username},
 				{"phnno", phn},
-				{"sqr", 5}},
+				{"sqr", 5},
+			    {"level",1}},
 		},
 	}
 	updateResult, err := c.UpdateOne(context.TODO(), filter, update)
