@@ -9,10 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var cl1, cl2 *mongo.Collection
+var cl1, cl2,cl3  *mongo.Collection
 
 func init(){
- cl1,cl2=database.Createdb()
+ cl1,cl2,cl3=database.Createdb()
 }
 
 func main() {
@@ -20,7 +20,9 @@ func main() {
 	r.HandleFunc("/register", register).Methods("POST")
 	r.HandleFunc("/signup",signup).Methods("POST","GET")
 	r.HandleFunc("/login", login).Methods("POST")
-	// r.HandleFunc("/dashboard", dashboard).Methods("GET", "POST")
+	r.HandleFunc("/dashboard", dashboard).Methods("GET")
+	r.HandleFunc("/submit",submit)
+
 	http.Handle("/", r)
 	http.ListenAndServe(":80", nil)
 }

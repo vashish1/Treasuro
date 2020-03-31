@@ -20,6 +20,9 @@ type User struct {
 	Username     string
 	PhnNo        string
 	SQR          int
+	Level        int
+	Score        int
+	Attempts     int
 	TimeStamp    time.Time
 	Email        string
 	PasswordHash string
@@ -87,7 +90,7 @@ func FindUser(usercollection *mongo.Collection, st string, p string) bool {
 
 //Finddb finds the required database
 func Finddb(c *mongo.Collection, s string) User {
-	filter := bson.D{primitive.E{Key: "username", Value: s}}
+	filter := bson.D{primitive.E{Key: "uuid", Value: s}}
 	var result User
 
 	err := c.FindOne(context.TODO(), filter).Decode(&result)
@@ -96,6 +99,7 @@ func Finddb(c *mongo.Collection, s string) User {
 	}
 	return result
 }
+
 func UpdateUserCreds(c *mongo.Collection, id, username, phn, email, pass string) bool {
 	filter := bson.D{
 		{"uuid", id},
@@ -138,3 +142,4 @@ func UpdateToken(c *mongo.Collection, o string, t string) bool {
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	return true
 }
+

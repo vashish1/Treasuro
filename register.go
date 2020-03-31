@@ -83,7 +83,6 @@ func signup(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	if(test.Password==test.Cpassword){
-
 		p:=database.UpdateUserCreds(cl1,id,test.Username,test.PhNumber,test.Email,test.Password)
 		if p{
 			w.WriteHeader(http.StatusOK)
@@ -93,6 +92,4 @@ func signup(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "password do not match"}`))
 	}
-
-	
 }
