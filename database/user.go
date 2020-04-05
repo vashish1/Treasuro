@@ -72,6 +72,18 @@ func Findfromuserdb(usercollection *mongo.Collection, st string) bool {
 	return true
 }
 
+func CheckUsername(c *mongo.Collection,st string)bool{
+	filter := bson.D{primitive.E{Key: "username", Value: st}}
+	var result User
+
+	err := c.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return true
+	}
+	return false
+}
+
 //FindUser finds if the user exists but with respect to the username.
 func FindUser(usercollection *mongo.Collection, st string, p string) bool {
 	filter := bson.D{primitive.E{Key: "username", Value: st}}

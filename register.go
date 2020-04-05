@@ -82,6 +82,11 @@ func signup(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte(`{"error": "body not parsed"}`))
 		return
 	}
+    if ok:=database.CheckUsername(cl1,test.Username);!ok{
+        w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Username already exists"}`))
+		return
+	}
 	if(test.Password==test.Cpassword){
 		p:=database.UpdateUserCreds(cl1,id,test.Username,test.PhNumber,test.Email,test.Password)
 		if p{
