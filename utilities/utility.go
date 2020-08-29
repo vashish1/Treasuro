@@ -1,7 +1,9 @@
 package utilities
 
 import (
+	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,7 +15,8 @@ func GenerateToken(name, id string) string {
 		"id":   id,
 	})
 
-	tokenString, err := token.SignedString([]byte("idgafaboutthingsanymore"))
+	tokenString, err := token.SignedString([]byte(os.Getenv("blockkey")))
+	fmt.Println("generated",tokenString)
 	if err == nil {
 		return tokenString
 	}

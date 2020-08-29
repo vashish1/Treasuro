@@ -1,10 +1,11 @@
 package main
 
 import (
-	"Treasuro/database"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/vashish1/Treasuro/database"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -33,7 +34,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 			"id":   u.UUID,
 		})
 
-		tokenString, err := token.SignedString([]byte("idgafaboutthingsanymore"))
+		tokenString, err := token.SignedString([]byte(secret))
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

@@ -1,13 +1,14 @@
 package main
 
 import (
-	"Treasuro/database"
-	"Treasuro/utilities"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/vashish1/Treasuro/database"
+	"github.com/vashish1/Treasuro/utilities"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -32,7 +33,7 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 			return nil, fmt.Errorf("Unexpected signing method")
 			w.Write([]byte(`{"error": "Token not verified"}`))
 		}
-		return []byte("idgafaboutthingsanymore"), nil
+		return []byte(secret), nil
 	})
 	var _, id string
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -69,7 +70,7 @@ func submit(w http.ResponseWriter, r *http.Request) {
 			return nil, fmt.Errorf("Unexpected signing method")
 			w.Write([]byte(`{"error": "Token not verified"}`))
 		}
-		return []byte("idgafaboutthingsanymore"), nil
+		return []byte(secret), nil
 	})
 	var _, id string
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {

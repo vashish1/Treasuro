@@ -1,15 +1,18 @@
 package main
 
 import (
-	"Treasuro/database"
-	"Treasuro/utilities"
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/vashish1/Treasuro/database"
 )
+
+var secret=os.Getenv("blockkey")
 
 type regis struct {
 	Name string
@@ -17,64 +20,66 @@ type regis struct {
 }
 
 type mockSignup struct {
-	Username string
-	PhNumber string
-	Email     string 
-	Password  string 
-	Cpassword string 
+	Username  string
+	Number  string
+	Email     string
+	Password  string
+	Cpassword string
+}
+
+type Register struct {
+	Success bool   `json:"success,omitempty"`
+	Token   string `json:"token,omitempty"`
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
-	var test regis
+	var input regis
+	var result Register
 	w.Header().Set("Content-Type", "application/json")
-	var user database.User
 	body, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(body, &test)
+	err := json.Unmarshal(body, &input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "body not parsed"}`))
 		return
 	}
-	ok:=database.UuidExists(cl2,test.Uid)
-	if ok{
-		user.Name=test.Name
-		user.UUID=test.Uid
-		user.Token=utilities.GenerateToken(user.Name,user.UUID)
-		okk:=database.Insertintouserdb(cl1,user)
-		if okk{
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(user.Token)
-			w.Write([]byte(`{"success": "created token successfully"}`))
-		    w.Write([]byte(`{"successfull": "user created"}`))
-		}
+	ok := database.UuidExists(cl2, input.Uid)
+	if ok {
 
-	}else{
+		okk,token := database.RegisterUser(cl1, input.Name, input.Uid)
+		if okk {
+			w.WriteHeader(http.StatusOK)
+			result.Token = token
+			result.Success = true
+			json.NewEncoder(w).Encode(result)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "uuid already registered"}`))
+		return
+	} 
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "uuid do not exist"}`))
-	}
-
 }
 
-func signup(w http.ResponseWriter, r *http.Request){
-    var test mockSignup
+func signup(w http.ResponseWriter, r *http.Request) {
+	var test mockSignup
 	w.Header().Set("Content-Type", "application/json")
 	tokenString := r.Header.Get("Authorization")
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-	fmt.Println("token", tokenString)
-
+	fmt.Println("token",tokenString)
 	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
-			w.Write([]byte(`{"error": "Token not verified"}`))
 		}
-		return []byte("idgafaboutthingsanymore"), nil
+		return []byte(secret), nil
 	})
 	var _, id string
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		 _= claims["name"].(string)
 		id = claims["id"].(string)
+		_ = claims["name"].(string)
 	}
+	fmt.Println("////",id)
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &test)
 	if err != nil {
@@ -82,19 +87,22 @@ func signup(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte(`{"error": "body not parsed"}`))
 		return
 	}
-    if ok:=database.CheckUsername(cl1,test.Username);!ok{
-        w.WriteHeader(http.StatusBadRequest)
+	if ok := database.CheckUsername(cl1, test.Username); !ok {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "Username already exists"}`))
 		return
 	}
-	if(test.Password==test.Cpassword){
-		p:=database.UpdateUserCreds(cl1,id,test.Username,test.PhNumber,test.Email,test.Password)
-		if p{
+	if test.Password == test.Cpassword {
+		p := database.UpdateUserCreds(cl1, id, test.Username, test.Number, test.Email, test.Password)
+		if p {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"successfull": "updated credentials"}`))
+			w.Write([]byte(`{"success": "true"}`))
+			return
 		}
-	}else{
+		    w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"success": "false"}`))
+			return
+	} 
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "password do not match"}`))
-	}
+		w.Write([]byte(`{"error": "Password do not match"}`))
 }

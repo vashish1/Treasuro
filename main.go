@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Treasuro/database"
+	"github.com/vashish1/Treasuro/database"
 
 	"net/http"
 

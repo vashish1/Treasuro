@@ -1,9 +1,10 @@
 package main
 
 import (
-	"Treasuro/database"
 	"encoding/json"
 	"net/http"
+
+	"github.com/vashish1/Treasuro/database"
 )
 
 func leaderboard(w http.ResponseWriter, r *http.Request) {

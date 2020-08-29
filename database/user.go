@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/vashish1/Treasuro/utilities"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -45,6 +46,24 @@ func SHA256ofstring(p string) string {
 	return hash
 }
 
+func RegisterUser(c *mongo.Collection, name, uid string) (bool,string) {
+	var user User
+	user.Name = name
+	user.UUID = uid
+	user.Token = utilities.GenerateToken(user.Name, user.UUID)
+	filter := bson.D{primitive.E{Key: "uuid", Value: uid}}
+	var result User
+	err := c.FindOne(context.TODO(), filter).Decode(&result)
+	if err == nil {
+		return false,""
+	}
+    _, err = c.InsertOne(context.TODO(), user)
+	if err != nil {
+		return false,""
+	}
+	return true,user.Token
+}
+
 //Insertintouserdb inserts the data into the database
 func Insertintouserdb(usercollection *mongo.Collection, u User) bool {
 
@@ -72,7 +91,7 @@ func Findfromuserdb(usercollection *mongo.Collection, st string) bool {
 	return true
 }
 
-func CheckUsername(c *mongo.Collection,st string)bool{
+func CheckUsername(c *mongo.Collection, st string) bool {
 	filter := bson.D{primitive.E{Key: "username", Value: st}}
 	var result User
 
@@ -125,12 +144,11 @@ func UpdateUserCreds(c *mongo.Collection, id, username, phn, email, pass string)
 				{"username", username},
 				{"phnno", phn},
 				{"sqr", 5},
-			    {"level",1}},
+				{"level", 1}},
 		},
 	}
 	updateResult, err := c.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
-		log.Fatal(err)
 		return false
 	}
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
@@ -155,4 +173,3 @@ func UpdateToken(c *mongo.Collection, o string, t string) bool {
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 	return true
 }
-
