@@ -17,7 +17,7 @@ type logn struct {
 
 func login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// var result database.User
+	var result Register
 	var user logn
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &user)
@@ -41,15 +41,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"error": "error in token string"}`))
 			return
 		}
-		tkn := database.UpdateToken(cl1, u.Email, tokenString)
-		if tkn {
-			json.NewEncoder(w).Encode(tokenString)
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{"success": "created token successfully"}`))
-		} else {
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{"error": "token not created"}`))
+	     	result.Success=true
+			result.Token=tokenString
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(result)
+			return
 		}
-	}
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"error": "Invalid Credentials"}`))
 }
 

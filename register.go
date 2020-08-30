@@ -68,12 +68,13 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.Header.Get("Authorization")
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	fmt.Println("token",tokenString)
-	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
 		}
 		return []byte(secret), nil
 	})
+	fmt.Println("err",err)
 	var _, id string
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		id = claims["id"].(string)
@@ -81,7 +82,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("////",id)
 	body, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(body, &test)
+	err = json.Unmarshal(body, &test)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "body not parsed"}`))

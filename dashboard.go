@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/vashish1/Treasuro/database"
-	"github.com/vashish1/Treasuro/utilities"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -31,7 +30,6 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
-			w.Write([]byte(`{"error": "Token not verified"}`))
 		}
 		return []byte(secret), nil
 	})
@@ -44,18 +42,18 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 	if user.Attempts == 5 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "Sorry, you have been disqualified"}`))
-	} else {
-		ques := database.FindQuestion(cl3, user.Level)
-		data := Data{
-			User:     user.Username,
-			Level:    user.Level,
-			Score:    user.Score,
-			Attempts: user.Attempts,
-			Question: ques.Question,
-		}
-		json.NewEncoder(w).Encode(data)
-		w.WriteHeader(http.StatusOK)
+		return
 	}
+	ques := database.FindQuestion(cl3, user.Level)
+	data := Data{
+		User:     user.Username,
+		Level:    user.Level,
+		Score:    user.Score,
+		Attempts: user.Attempts,
+		Question: ques.Question,
+	}
+	json.NewEncoder(w).Encode(data)
+	w.WriteHeader(http.StatusOK)
 }
 
 func submit(w http.ResponseWriter, r *http.Request) {
@@ -63,12 +61,10 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.Header.Get("Authorization")
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	fmt.Println("token", tokenString)
-
+	var resp Register
 	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
-			w.Write([]byte(`{"error": "Token not verified"}`))
 		}
 		return []byte(secret), nil
 	})
@@ -77,26 +73,26 @@ func submit(w http.ResponseWriter, r *http.Request) {
 		_ = claims["name"].(string)
 		id = claims["id"].(string)
 	}
-	user := database.Finddb(cl1, id)
-	var Answer string
+	var Answer database.Response
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &Answer)
-	if err != nil {
-		ques := database.FindQuestion(cl3, user.Level)
-		random := database.FindQuestion(cl3, 0)
-		if ques.Answer == Answer {
-			database.UpdateScore(cl1, id, 10)
-		} else if random.Answer == Answer {
-			rndmsc := utilities.RandomScore()
-			database.UpdateScore(cl1, id, rndmsc)
-		} else {
-			database.UpdateAttempts(cl1, id)
+	if err == nil {
+		score := database.CheckAnswer(cl3, Answer)
+		if score == 0 {
+			database.UpdateAttempts(cl1,id)
+			w.WriteHeader(http.StatusNotAcceptable)
+			w.Write([]byte(`{"success": false}`))
+			return
 		}
+		if score==10{
+			database.FixAttempts(cl1,id)
+		}
+		database.UpdateScore(cl1, id, score)
+		resp.Success = true
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"successfull": "updated score"}`))
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "password do not match"}`))
+		json.NewEncoder(w).Encode(resp)
+		return
 	}
-
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte(`{"error": "Body not parsed"}`))
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/vashish1/Treasuro/database"
 
 	"net/http"
@@ -13,6 +15,7 @@ import (
 var cl1, cl2, cl3 *mongo.Collection
 
 func init() {
+	fmt.Println("secret", secret)
 	cl1, cl2, cl3 = database.Createdb()
 }
 
